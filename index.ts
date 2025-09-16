@@ -1,4 +1,6 @@
 import { test as base } from "@playwright/test";
+import "dotenv/config";
+
 
 // Declare your options to type-check your configuration.
 export type JiraTestSkipperOptions = {
@@ -9,6 +11,17 @@ export type JiraTestSkipperOptions = {
    */
   jiraTestSkipperToken: string | null;
 };
+
+// Тут я читаю из env доступные статусы
+function getAllowedStatusesFromEnv(): Set<string> {
+  const raw = process.env.JIRA_DONE_STATUSES ?? "done";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
 
 // Specify both option and fixture types.
 export const test = base.extend<
@@ -61,6 +74,9 @@ export const test = base.extend<
           );
           console.log(`Response: ${response.status} ${response.statusText}`);
           const data = await response.json();
+          //console.log(`Data: ${JSON.stringify(data)}`);
+          // console.log(`Data: ${JSON.stringify(data.issues)}`);
+          console.log(`Data: ${JSON.stringify(data.issues[0].fields.status.name)}`);
           jiraBugsStatus = data.issues.map((issue) => ({
             key: issue.key,
             status: issue.fields.status,
@@ -72,14 +88,24 @@ export const test = base.extend<
           console.error(error);
           throw error;
         }
-        // TODO: habdle array of statuses
-        if (
-          jiraBugsStatus.some(
-            (issue) => !issue.status.name.toLowerCase().includes("done")
-          )
-        ) {
-          // TODO: fix error message for array of bugs
-          test.fail(true, `Jira bug is open`);
+        // TODO: handle array of statuses
+
+        const allowedStatuses = getAllowedStatusesFromEnv();
+
+        const openIssues = jiraBugsStatus.filter(
+          (issue) => !allowedStatuses.has(issue.status.name?.toLowerCase())
+        );
+
+        if (openIssues.length > 0) {
+          const list = openIssues
+            .map((i) => `${i.key} (${i.status.name})`)
+            .join(", ");
+          test.fail(
+            true,
+            `Jira bug(s) not in allowed statuses [${[...allowedStatuses].join(
+              ", "
+            )}]: ${list}`
+          );
         }
         await use(undefined);
       }
