@@ -8,3 +8,7 @@ node_modules/
 /tests/
 /playwright.config.ts
 .env
+*.d.ts
+*.js
+*.js.map
+*.d.ts.map
