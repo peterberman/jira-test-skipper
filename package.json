@@ -1,6 +1,6 @@
 {
   "name": "jira-test-skipper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "build": "tsc"
@@ -9,7 +9,7 @@
   "author": "Peter Berman <salapepa@gmail.com>",
   "license": "MIT",
   "description": "Skiping tests based on issue status.",
-  "files": ["index.js"],
+  "files": ["index.js", "index.d.ts", "index.js.map", "index.d.ts.map"],
   "types": "index.d.ts",
   "devDependencies": {
     "@types/node": "^24.6.0",
